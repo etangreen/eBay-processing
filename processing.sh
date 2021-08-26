@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # create features
-python repo/a_clean.py
+python repo/a_sundry.py
 python repo/b_feats/other.py
 python repo/b_feats/w2v.py
 python repo/b_feats/w2v.py --slr
