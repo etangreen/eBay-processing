@@ -1,12 +1,11 @@
 import os
 import numpy as np
 import pandas as pd
-from util import get_norm
-from utils import topickle
-from const import START, SEED
-from constants import SHARES, NUM_CHUNKS, DAY, NUM_COMMON_CONS
+from utils import get_norm, topickle
+from constants import START, SEED, SHARES, NUM_CHUNKS, DAY, NUM_COMMON_CONS
 from featnames import START_PRICE, BYR_HIST, NORM, SLR, LSTG, THREAD, INDEX, \
-    CLOCK, CON, ACCEPT, REJECT, META, LEAF, SLR_BO_CT
+    CLOCK, CON, ACCEPT, REJECT, META, LEAF, SLR_BO_CT, START_DATE, DEC_PRICE, \
+    ACC_PRICE, STORE, CNDTN, END_TIME, BYR, TEST
 from paths import CLEAN_DIR, FEATS_DIR, PARTS_DIR, PCTILE_DIR
 
 # data types for csv read
@@ -15,14 +14,14 @@ OTYPES = {LSTG: 'int64',
           INDEX: 'uint8',
           CLOCK: 'int64',
           'price': 'float64',
-          'accept': bool,
-          'reject': bool,
+          ACCEPT: bool,
+          REJECT: bool,
           'message': bool}
 
 TTYPES = {LSTG: 'int64',
           THREAD: 'int64',
-          'byr': 'int64',
-          'byr_hist': 'int64',
+          BYR: 'int64',
+          BYR_HIST: 'int64',
           'bin': bool,
           'byr_us': bool}
 
@@ -30,18 +29,18 @@ LTYPES = {LSTG: 'int64',
           SLR: 'int64',
           META: 'int64',
           LEAF: 'int64',
-          'cndtn': 'uint8',
-          'start_date': 'uint16',
-          'end_time': 'int64',
+          CNDTN: 'uint8',
+          START_DATE: 'uint16',
+          END_TIME: 'int64',
           'fdbk_score': 'int64',
           'fdbk_pstv': 'int64',
           'start_price': 'float64',
           'photos': 'uint8',
           'slr_lstg_ct': 'int64',
-          'slr_bo_ct': 'int64',
-          'decline_price': 'float64',
-          'accept_price': 'float64',
-          'store': bool,
+          SLR_BO_CT: 'int64',
+          DEC_PRICE: 'float64',
+          ACC_PRICE: 'float64',
+          STORE: bool,
           'slr_us': bool,
           'fast': bool}
 
@@ -113,7 +112,7 @@ def partition_lstgs(s):
         curr = last + int(u.size * val)
         d[key] = np.sort(slrs.loc[u[last:curr]].values)
         last = curr
-    d['test'] = np.sort(slrs.loc[u[last:]].values)
+    d[TEST] = np.sort(slrs.loc[u[last:]].values)
     return d
 
 

@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
 from utils import feat_to_pctile
-from constants import IDX, MAX_DELAY_TURN, DAY
-from const import START
+from constants import IDX, MAX_DELAY_TURN, DAY, START
 from featnames import BYR_HIST, DELAY, LSTG, THREAD, INDEX, CLOCK, ACCEPT, \
     BYR, START_TIME, START_PRICE, START_DATE, END_TIME, REJECT
 
@@ -475,21 +474,21 @@ def get_cat_quantiles_wrapper(events, levels, featname):
 
 
 def create_obs(df, is_start, cols):
-    toAppend = pd.DataFrame(index=df.index, columns=[INDEX] + cols)
+    to_append = pd.DataFrame(index=df.index, columns=[INDEX] + cols)
     for c in [ACCEPT, 'message']:
         if c in cols:
-            toAppend[c] = False
+            to_append[c] = False
     if is_start:
-        toAppend.loc[:, REJECT] = False
-        toAppend.loc[:, INDEX] = 0
-        toAppend.loc[:, 'price'] = df[START_PRICE]
-        toAppend.loc[:, CLOCK] = df[START_TIME]
+        to_append.loc[:, REJECT] = False
+        to_append.loc[:, INDEX] = 0
+        to_append.loc[:, 'price'] = df[START_PRICE]
+        to_append.loc[:, CLOCK] = df[START_TIME]
     else:
-        toAppend.loc[:, REJECT] = True
-        toAppend.loc[:, INDEX] = 1
-        toAppend.loc[:, 'price'] = np.nan
-        toAppend.loc[:, CLOCK] = df[END_TIME]
-    return toAppend.set_index(INDEX, append=True)
+        to_append.loc[:, REJECT] = True
+        to_append.loc[:, INDEX] = 1
+        to_append.loc[:, 'price'] = np.nan
+        to_append.loc[:, CLOCK] = df[END_TIME]
+    return to_append.set_index(INDEX, append=True)
 
 
 def expand_index(df, levels):

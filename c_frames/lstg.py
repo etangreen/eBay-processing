@@ -1,12 +1,12 @@
 import os
 from collections import OrderedDict
 import numpy as np
-from util import extract_day_feats, get_lstgs, do_rounding
+from utils import extract_day_feats, get_lstgs, do_rounding, input_partition, \
+    topickle, load_feats, feat_to_pctile
 from constants import DAY
-from paths import PARTS_DIR, PCTILE_DIR, INPUT_DIR
+from paths import PARTS_DIR, PCTILE_DIR, FEATNAMES_DIR
 from featnames import START_PRICE, META, LEAF, CNDTN, SLR, BYR, LSTG, X_LSTG, \
     VALIDATION, DEC_PRICE, ACC_PRICE, STORE, SLR_BO_CT, START_DATE
-from utils import input_partition, topickle, load_feats, feat_to_pctile
 
 AS_IS_FEATS = [STORE, 'slr_us', 'fast', 'photos', 'slr_lstg_ct',
                SLR_BO_CT, START_PRICE, 'fdbk_score', 'fdbk_pstv']
@@ -100,7 +100,7 @@ def main():
         cols = OrderedDict()
         for k, v in x_lstg.items():
             cols[k] = list(v.columns)
-        topickle(cols, INPUT_DIR + 'featnames/{}.pkl'.format(X_LSTG))
+        topickle(cols, FEATNAMES_DIR + '{}.pkl'.format(X_LSTG))
 
     # convert to numpy and save
     x_lstg = {k: v.values for k, v in x_lstg.items()}

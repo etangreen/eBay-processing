@@ -1,10 +1,26 @@
+import numpy as np
 import pandas as pd
-from util import collect_date_clock_feats, get_days_delay, get_lstgs, get_common_cons
-from utils import input_partition, load_feats
+from utils import collect_date_clock_feats, get_days_delay, get_lstgs, \
+    input_partition, load_feats
 from constants import IDX
 from paths import PARTS_DIR
-from featnames import DAYS, DELAY, CON, NORM, COMMON, MSG, REJECT, \
-    AUTO, EXP, SLR, CLOCK, INDEX
+from featnames import DAYS, DELAY, CON, NORM, COMMON, MSG, REJECT, AUTO, EXP, SLR, \
+    CLOCK, INDEX, X_OFFER
+
+
+def get_common_cons(con=None):
+    """
+    Identifies whether concession is a common concession.
+    :param pd.Series con: concessions
+    :return: pd.Series
+    """
+    common_cons = load_feats('common_cons')
+    turn = con.index.get_level_values(INDEX)
+    s = pd.Series(False, index=con.index)
+    for t in range(1, 7):
+        mask = turn == t
+        s.loc[mask] = con[mask].apply(lambda x: max(np.isclose(x, common_cons[t])))
+    return s
 
 
 def get_x_offer(offers, tf):
@@ -57,8 +73,8 @@ def main():
     print('{}/x_offer'.format(part))
 
     x_offer, clock = create_x_offer(lstgs=get_lstgs(part))
-    x_offer.to_pickle(PARTS_DIR + '{}/x_offer.pkl'.format(part))
-    clock.to_pickle(PARTS_DIR + '{}/clock.pkl'.format(part))
+    x_offer.to_pickle(PARTS_DIR + '{}/{}.pkl'.format(part, X_OFFER))
+    clock.to_pickle(PARTS_DIR + '{}/{}.pkl'.format(part, CLOCK))
 
 
 if __name__ == "__main__":

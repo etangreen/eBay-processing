@@ -1,14 +1,78 @@
+import argparse
+import multiprocessing as mp
+import pickle
 from time import sleep
 import numpy as np
 import pandas as pd
-from torch import multiprocessing as mp
-from agent.const import COMMON_CONS
-from utils import extract_clock_feats, byr_norm, slr_norm, unpickle
 from constants import IDX, DAY, MAX_DELAY_TURN, NUM_CHUNKS
-from paths import PARTS_DIR
-from python.const import START, HOLIDAYS
-from featnames import HOLIDAY, DOW_PREFIX, TIME_OF_DAY, AFTERNOON, \
-    CLOCK_FEATS, SLR, BYR, INDEX
+from paths import PARTS_DIR, PCTILE_DIR, FEATS_DIR
+from constants import START, HOLIDAYS
+from featnames import HOLIDAY, DOW_PREFIX, TIME_OF_DAY, AFTERNOON, LSTG, \
+    CLOCK_FEATS, SLR, BYR
+
+
+def unpickle(file):
+    """
+    Unpickles a .pkl file encoded with Python 3
+    :param file: str giving path to file
+    :return: contents of file
+    """
+    with open(file, "rb") as f:
+        obj = pickle.load(f)
+    return obj
+
+
+def topickle(contents=None, path=None):
+    """
+    Pickles a .pkl file encoded with Python 3
+    :param contents: pickle-able object
+    :param str path: path to file
+    :return: contents of file
+    """
+    with open(path, "wb") as f:
+        pickle.dump(contents, f, protocol=4)
+
+
+def input_partition():
+    """
+    Parses command line input for partition name (and optional argument).
+    :return part: string partition name.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--part', required=True, type=str)
+    args = parser.parse_args()
+    return args.part
+
+
+def load_feats(name, lstgs=None, fill_zero=False):
+    """
+    Loads dataframe of features (and reindexes).
+    :param str name: filename
+    :param lstgs: listings to restrict to
+    :param bool fill_zero: fill missings with 0's if True
+    :return: dataframe of features
+    """
+    df = unpickle(FEATS_DIR + '{}.pkl'.format(name))
+    if lstgs is None:
+        return df
+    kwargs = {'index': lstgs}
+    if len(df.index.names) > 1:
+        kwargs['level'] = LSTG
+    if fill_zero:
+        kwargs['fill_value'] = 0.
+    return df.reindex(**kwargs)
+
+
+def extract_clock_feats(seconds):
+    """
+    Creates clock features from timestamps.
+    :param seconds: seconds since START.
+    :return: tuple of time_of_day sine transform and afternoon indicator.
+    """
+    sec_norm = (seconds % DAY) / DAY
+    time_of_day = np.sin(sec_norm * np.pi)
+    afternoon = sec_norm >= 0.5
+    return time_of_day, afternoon
 
 
 def extract_day_feats(seconds):
@@ -63,6 +127,28 @@ def get_days_delay(clock):
     return days, delay
 
 
+def slr_norm(con=None, prev_byr_norm=None, prev_slr_norm=None):
+    """
+    Normalized offer for seller turn.
+    :param con: current concession, between 0 and 1.
+    :param prev_byr_norm: normalized concession from one turn ago.
+    :param prev_slr_norm: normalized concession from two turns ago.
+    :return: normalized distance of current offer from start_price to 0.
+    """
+    return 1 - con * prev_byr_norm - (1 - prev_slr_norm) * (1 - con)
+
+
+def byr_norm(con=None, prev_byr_norm=None, prev_slr_norm=None):
+    """
+    Normalized offer for buyer turn.
+    :param con: current concession, between 0 and 1.
+    :param prev_byr_norm: normalized concession from two turns ago.
+    :param prev_slr_norm: normalized concession from one turn ago.
+    :return: normalized distance of current offer from 0 to start_price.
+    """
+    return (1 - prev_slr_norm) * con + prev_byr_norm * (1 - con)
+
+
 def get_norm(con):
     """
     Calculate normalized concession from rounded concessions.
@@ -111,18 +197,27 @@ def do_rounding(price):
     return is_round, is_nines
 
 
-def get_common_cons(con=None):
+def load_pctile(name=None):
     """
-    Identifies whether concession is a common concession.
-    :param pd.Series con: concessions
-    :return: pd.Series
+    Loads the percentile file given by name.
+    :param str name: name of feature
+    :return: pd.Series with feature values in the index and percentiles in the values
     """
-    turn = con.index.get_level_values(INDEX)
-    s = pd.Series(False, index=con.index)
-    for t in range(1, 7):
-        mask = turn == t
-        s.loc[mask] = con[mask].apply(lambda x: max(np.isclose(x, COMMON_CONS[t])))
-    return s
+    path = PCTILE_DIR + '{}.pkl'.format(name)
+    return unpickle(path)
+
+
+def feat_to_pctile(s=None, pc=None):
+    """
+    Converts byr hist counts to percentiles or visa versa.
+    :param pandas.Series s: counts
+    :param pandas.Series pc: percentiles
+    :return: Series
+    """
+    if pc is None:
+        pc = load_pctile(name=str(s.name))
+    v = pc.reindex(index=s.values, method='pad').values
+    return pd.Series(v, index=s.index, name=s.name)
 
 
 def run_func_on_chunks(f=None, func_kwargs=None, num_chunks=NUM_CHUNKS):

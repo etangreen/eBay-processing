@@ -1,12 +1,8 @@
 import pandas as pd
-from pandas.tseries.holiday import USFederalHolidayCalendar as Calendar
 from utils import topickle
-from constants import MAX_DAYS
+from constants import MAX_DAYS, START, END, HOLIDAYS
 from paths import FEATS_DIR
-from const import START, END
 from featnames import HOLIDAY, DOW_PREFIX
-
-HOLIDAYS = Calendar().holidays(start=START, end=END)
 
 
 def main():

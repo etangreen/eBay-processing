@@ -1,10 +1,9 @@
 import pandas as pd
+from utils import get_lstgs, input_partition, load_feats
 from constants import DAY
 from paths import PARTS_DIR
 from featnames import LOOKUP, START_TIME, END_TIME, START_PRICE, DEC_PRICE, \
     ACC_PRICE, START_DATE
-from util import get_lstgs
-from utils import input_partition, load_feats
 
 
 def create_lookup(lstgs=None):

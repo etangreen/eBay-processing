@@ -2,11 +2,10 @@ import numpy as np
 import pandas as pd
 from datetime import datetime as dt
 from b_feats.util import collapse_dict
-from utils import unpickle
-from util import run_func_on_chunks
+from utils import unpickle, run_func_on_chunks
 from constants import IDX
 from paths import FEATS_DIR
-from const import START
+from constants import START
 from featnames import SLR, BYR, LSTG, THREAD, INDEX, ACCEPT, REJECT, CLOCK, NORM
 
 
@@ -40,7 +39,7 @@ def thread_count(subset, full=False):
                                           level=LSTG)
     if full:
         counts = thread_counter.sum(axis=1)
-        counts = counts.groupby('lstg').cumsum()
+        counts = counts.groupby(LSTG).cumsum()
         counts = conform_cut(counts)
         return counts
     else:
@@ -50,26 +49,26 @@ def thread_count(subset, full=False):
             # restrict observations
             cut = thread_counter.drop(n, axis=1).loc[total_threads >= n]
             counts = cut.sum(axis=1)
-            counts = counts.groupby('lstg').cumsum()
+            counts = counts.groupby(LSTG).cumsum()
             count[n] = conform_cut(counts)
         # concat into series and return
         return collapse_dict(count, index_names)
 
 
 def conform_cut(cut):
-    cut = cut.reset_index('index', drop=True)
+    cut = cut.reset_index(INDEX, drop=True)
     cut = cut.groupby(level=cut.index.names).last()
     return cut
 
 
 def rolling_feat(count, sum_feat=False):
-    count = count.reset_index('clock', drop=False)
-    count = count.groupby('lstg')
+    count = count.reset_index(CLOCK, drop=False)
+    count = count.groupby(LSTG)
     if sum_feat:
         count = count.apply(lambda x: x.rolling('172800s', on='clock', min_periods=1).sum())
     else:
         count = count.apply(lambda x: x.rolling('172800s', on='clock', min_periods=1).max())
-    count = count.set_index('clock', append=True, drop=True).squeeze()
+    count = count.set_index(CLOCK, append=True, drop=True).squeeze()
     return count
 
 

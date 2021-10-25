@@ -1,11 +1,11 @@
 import argparse
-import psutil
+import multiprocessing as mp
 import numpy as np
 import pandas as pd
 from gensim.models import Word2Vec
-from utils import get_role
 from paths import FEATS_DIR
-from const import SEED
+from constants import SEED
+from featnames import BYR, SLR
 
 VECTOR_SIZE = 32  # size of embedding
 
@@ -26,7 +26,7 @@ def run_model(s):
                      window=max_length,
                      min_count=1,
                      vector_size=VECTOR_SIZE,
-                     workers=psutil.cpu_count())
+                     workers=mp.cpu_count())
     # output dataframe
     print('Creating output')
     leafs = model.wv.vocab.keys()
@@ -41,8 +41,7 @@ def main():
     # parse parameters
     parser = argparse.ArgumentParser()
     parser.add_argument('--byr', action='store_true')
-    byr = parser.parse_args().byr
-    role = get_role(byr)
+    role = BYR if parser.parse_args().byr else SLR
 
     # load sentences
     s = pd.read_pickle(FEATS_DIR + 'leaf_{}.pkl'.format(role))

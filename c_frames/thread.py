@@ -1,15 +1,14 @@
 import pandas as pd
-from util import get_lstgs
-from utils import get_days_since_lstg, input_partition, load_feats
+from utils import get_lstgs, get_days_since_lstg, input_partition, load_feats
 from constants import MAX_DAYS, DAY
 from paths import PARTS_DIR
-from featnames import BYR_HIST, DAYS_SINCE_LSTG, START_DATE
+from featnames import BYR_HIST, DAYS_SINCE_LSTG, START_DATE, INDEX, X_THREAD
 
 
 def create_x_thread(lstgs=None):
     # load data
     offers = load_feats('offers', lstgs=lstgs)
-    thread_start = offers.clock.xs(1, level='index')
+    thread_start = offers.clock.xs(1, level=INDEX)
     start_date = load_feats('listings', lstgs=lstgs)[START_DATE]
     lstg_start = start_date.astype('int64') * DAY
     hist = load_feats('threads', lstgs=lstgs)[BYR_HIST]
@@ -30,7 +29,7 @@ def main():
     print('{}/x_thread'.format(part))
 
     x_thread = create_x_thread(lstgs=get_lstgs(part))
-    x_thread.to_pickle(PARTS_DIR + '{}/x_thread.pkl'.format(part))
+    x_thread.to_pickle(PARTS_DIR + '{}/{}.pkl'.format(part, X_THREAD))
 
 
 if __name__ == "__main__":
