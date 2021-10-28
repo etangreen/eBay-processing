@@ -3,7 +3,7 @@ from utils import get_lstgs, input_partition, load_feats
 from constants import DAY
 from paths import PARTS_DIR
 from featnames import LOOKUP, START_TIME, END_TIME, START_PRICE, DEC_PRICE, \
-    ACC_PRICE, START_DATE
+    ACC_PRICE, START_DATE, SLR, META, LEAF, CNDTN, STORE, SLR_BO_CT
 
 
 def create_lookup(lstgs=None):
@@ -15,7 +15,9 @@ def create_lookup(lstgs=None):
     start_time = start_time.rename(START_TIME)
 
     # subset features
-    lookup = listings[[START_PRICE, DEC_PRICE, ACC_PRICE]]
+    lookup = listings[[SLR, STORE, SLR_BO_CT,
+                       META, LEAF, CNDTN,
+                       START_PRICE, DEC_PRICE, ACC_PRICE]]
     lookup = pd.concat([lookup, start_time, listings[END_TIME]], axis=1)
 
     return lookup

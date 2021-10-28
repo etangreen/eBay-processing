@@ -3,7 +3,7 @@ import multiprocessing as mp
 import numpy as np
 import pandas as pd
 from gensim.models import Word2Vec
-from paths import FEATS_DIR
+from paths import CLEAN_DIR, FEATS_DIR
 from constants import SEED
 from featnames import BYR, SLR
 
@@ -44,7 +44,7 @@ def main():
     role = BYR if parser.parse_args().byr else SLR
 
     # load sentences
-    s = pd.read_pickle(FEATS_DIR + 'leaf_{}.pkl'.format(role))
+    s = pd.read_csv(CLEAN_DIR + 'leaf_{}.csv'.format(role), index_col=0).squeeze()
 
     # run model
     df = run_model(s).rename(lambda x: role + x, axis=1).sort_index()
